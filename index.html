@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f9e6b" id="metaTheme">
+<title>Shopping List</title>
+<style>
+  :root{
+    --bg:#fff8ee; --card:#ffffff; --ink:#26332c; --muted:#7a857e;
+    --green:#2f9e6b; --green-d:#1f7a50; --pink:#ff5d8f; --pink-d:#d93f72; --yellow:#ffd166; --line:#eadfcb;
+    --g1:#2f9e6b; --g2:#52c28c; --tint:#e6f6ee; --tint2:#fff4d6;
+  }
+  body{transition:background .3s}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  body{padding:0 0 120px}
+  header{background:linear-gradient(135deg,var(--g1),var(--g2));color:#fff;position:relative;overflow:hidden;
+    padding:calc(env(safe-area-inset-top) + 18px) 18px 22px;border-radius:0 0 28px 28px;
+    box-shadow:0 6px 18px rgba(0,0,0,.18)}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{overflow-x:hidden}
+  header h1{margin:0 0 10px;font-size:clamp(20px,5.8vw,26px);letter-spacing:.2px;display:flex;align-items:center;gap:8px;position:relative;z-index:2;white-space:nowrap}
+  .themebtn{margin-left:auto;flex:0 0 auto;border:0;background:rgba(255,255,255,.25);color:#fff;font-size:13px;font-weight:700;
+    padding:7px 11px;border-radius:99px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  input[type=date]{-webkit-appearance:none;appearance:none;min-height:48px;text-align:left;display:block}
+  .deco{position:absolute;right:10px;top:48px;font-size:34px;opacity:.22;letter-spacing:6px;white-space:nowrap;pointer-events:none;transform:rotate(-8deg)}
+  header .bar,header .count{position:relative;z-index:2}
+  #themes{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:10}
+  #themes.show{display:flex}
+  #themes .sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px)}
+  #themes .tg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .tb{border:2px solid var(--line);background:#fff;border-radius:16px;padding:12px;font-size:16px;font-weight:600;
+    cursor:pointer;font-family:inherit;color:var(--ink);display:flex;align-items:center;gap:10px;text-align:left}
+  .tb span{font-size:26px}
+  .tb.on{border-color:var(--green);background:var(--tint)}
+  .bar{height:12px;background:rgba(255,255,255,.3);border-radius:99px;overflow:hidden}
+  .bar>div{height:100%;width:0;background:var(--yellow);border-radius:99px;transition:width .4s}
+  .count{margin-top:8px;font-size:14px;opacity:.95;display:flex;justify-content:space-between}
+  main{padding:16px;max-width:620px;margin:0 auto}
+
+  .add{background:var(--card);border-radius:22px;padding:14px;box-shadow:0 4px 14px rgba(0,0,0,.06);margin-bottom:18px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:2px solid var(--line);background:#fff;border-radius:99px;
+    padding:8px 14px;font-size:15px;color:var(--ink);cursor:pointer;font-family:inherit}
+  .chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+  .chip.ghost{border-style:dashed;color:var(--muted)}
+  .row{display:flex;gap:8px;margin-bottom:8px}
+  .row>*{min-width:0}
+  input{font-family:inherit;font-size:16px;border:2px solid var(--line);border-radius:14px;
+    padding:12px;background:#fff;color:var(--ink);width:100%}
+  input:focus{outline:none;border-color:var(--green)}
+  .prev{flex:0 0 52px;display:flex;align-items:center;justify-content:center;font-size:28px;
+    background:var(--tint2);border-radius:14px;border:2px solid var(--line);cursor:pointer}
+  .addbtn{width:100%;border:0;background:var(--pink);color:#fff;font-size:18px;font-weight:700;
+    padding:14px;border-radius:16px;cursor:pointer;font-family:inherit;box-shadow:0 4px 0 var(--pink-d)}
+  .addbtn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--pink-d)}
+
+  .store{margin:20px 4px 8px;font-size:15px;font-weight:700;color:var(--green-d);
+    display:flex;align-items:center;gap:8px}
+  .store small{color:var(--muted);font-weight:500}
+  .swipe{position:relative;margin-bottom:10px;border-radius:18px;overflow:hidden;background:#ddd}
+  .bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;font-size:15px;font-weight:700;color:#fff}
+  .bg .l{color:#fff}.bg .r{color:#fff}
+  .item{position:relative;background:var(--card);display:flex;align-items:center;gap:12px;
+    padding:12px 12px 12px 10px;touch-action:pan-y;transition:transform .2s;user-select:none;-webkit-user-select:none}
+  .item.drag{transition:none}
+  .emo{font-size:34px;width:46px;text-align:center;flex:0 0 46px;cursor:pointer}
+  .txt{flex:1;min-width:0}
+  .name{font-size:18px;font-weight:600;overflow-wrap:anywhere}
+  .meta{font-size:13px;color:var(--muted);margin-top:2px}
+  .qty{display:inline-block;background:var(--tint);color:var(--green-d);border-radius:99px;padding:1px 9px;margin-right:6px;font-weight:600}
+  .ck{flex:0 0 40px;height:40px;border-radius:50%;border:3px solid var(--green);background:#fff;
+    color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
+  .done .ck{background:var(--green)}
+  .done .name{text-decoration:line-through;color:var(--muted)}
+  .done .emo{filter:grayscale(1);opacity:.5}
+  .done .item{background:#f3f0e8}
+  .x{flex:0 0 28px;border:0;background:none;color:#c7bfae;font-size:20px;cursor:pointer;padding:0}
+
+  .empty{text-align:center;color:var(--muted);padding:40px 10px;font-size:17px;line-height:1.6}
+  .empty div{font-size:56px}
+  .foot{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;justify-content:center;
+    padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);background:linear-gradient(transparent,var(--bg) 35%)}
+  .foot button{flex:1;max-width:240px;border:2px solid var(--green);background:#fff;color:var(--green-d);
+    font-weight:700;font-size:15px;padding:12px;border-radius:16px;cursor:pointer;font-family:inherit}
+  .foot button.p{background:var(--green);color:#fff}
+  .hint{font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
+
+  #toast{position:fixed;left:50%;bottom:90px;transform:translate(-50%,40px);background:#26332c;color:#fff;
+    padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;display:flex;gap:12px;align-items:center;max-width:92vw;text-align:center}
+  #toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  #toast button{background:none;border:0;color:var(--yellow);font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+
+  #picker{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:10}
+  #picker.show{display:flex}
+  #picker .sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px)}
+  #picker .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:10px 0;font-size:28px;text-align:center}
+  #picker .grid span{padding:6px 0;border-radius:10px;cursor:pointer}
+  #picker .grid span:active{background:#fff4d6}
+  .bkopen{display:block;margin:12px auto 0;border:2px dashed var(--line);background:none;color:var(--muted);
+    font-size:14px;font-weight:600;padding:8px 14px;border-radius:99px;cursor:pointer;font-family:inherit}
+  #backup{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:10}
+  #backup.show{display:flex}
+  #backup .sheet{background:#fff;width:100%;max-height:90vh;overflow:auto;border-radius:24px 24px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px)}
+  #backup p{margin:6px 0 10px;font-size:14px;color:var(--muted);line-height:1.45}
+  #backup .two{display:flex;gap:8px;margin-bottom:6px}
+  #backup .two button,#restoreBtn{flex:1;border:2px solid var(--green);background:#fff;color:var(--green-d);font-weight:700;
+    font-size:15px;padding:12px;border-radius:14px;cursor:pointer;font-family:inherit}
+  #restoreBtn{width:100%;background:var(--green);color:#fff;margin-top:8px}
+  #backup hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+  #backup textarea{width:100%;height:90px;font-family:inherit;font-size:14px;border:2px solid var(--line);border-radius:14px;padding:10px;resize:vertical}
+  .confetti{position:fixed;top:-30px;font-size:26px;pointer-events:none;z-index:20;animation:fall 2.2s linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg);opacity:.9}}
+</style>
+</head>
+<body>
+<header>
+  <div class="deco" id="deco">🍌🥕🍎</div>
+  <h1><span id="tEmoji">🛍️</span> Shopping List <button class="themebtn" id="themeBtn">🎨 Theme</button></h1>
+  <div class="bar"><div id="bar"></div></div>
+  <div class="count"><span id="cnt">0 left</span><span id="pct"></span></div>
+</header>
+
+<main>
+  <section class="add">
+    <div class="chips" id="storeChips"></div>
+    <div class="row">
+      <div class="prev" id="prev" title="Tap to choose a different emoji">⭐</div>
+      <input id="name" placeholder="What do you need? (bananas…)" autocomplete="off" enterkeyhint="next">
+    </div>
+    <div class="row">
+      <input id="qty" placeholder="How many / how much? (2 lb, 6…)" autocomplete="off">
+      <input id="date" type="date" style="flex:0 0 44%;max-width:180px">
+    </div>
+    <button class="addbtn" id="addBtn">➕ Add to list</button>
+  </section>
+
+  <div id="list"></div>
+  <p class="hint">👉 Swipe right = picked ✅ &nbsp; 👈 Swipe left = remove 🗑️<br>Tap an emoji to change it</p>
+  <button class="bkopen" id="bkOpen">💾 Backup &amp; restore</button>
+</main>
+
+<div class="foot">
+  <button id="clearBtn">🧹 Clear picked</button>
+  <button class="p" id="shareBtn">📤 Share list</button>
+</div>
+
+<div id="toast"><span id="toastMsg"></span><button id="undoBtn">Undo</button></div>
+
+<div id="backup"><div class="sheet">
+  <b>💾 Backup &amp; restore</b>
+  <p>Save a copy of your list so it can never really be lost. Paste it into Notes, a text message to yourself, or email.</p>
+  <div class="two">
+    <button id="bkCopy">📋 Copy backup</button>
+    <button id="bkShare">📤 Share backup</button>
+  </div>
+  <hr>
+  <p>Restoring replaces the current list with the backup (you get a few seconds to undo).</p>
+  <textarea id="bkText" placeholder="Paste a backup here…"></textarea>
+  <button id="restoreBtn">♻️ Restore from backup</button>
+</div></div>
+
+<div id="themes"><div class="sheet">
+  <b>Choose a theme</b>
+  <div class="tg" id="themeGrid"></div>
+</div></div>
+
+<div id="picker"><div class="sheet">
+  <b>Pick an emoji</b>
+  <div class="grid" id="grid"></div>
+  <input id="custom" placeholder="…or type/paste any emoji">
+</div></div>
+
+<script>
+(function(){
+  var KEY='shoppingListV1';
+  var DEFAULT_STORES=[['🛒','Grocery'],['🥖','Aldi'],['🍎','Schnucks'],['🎯','Target'],['🔨','Hardware'],['💊','Pharmacy'],['🥕','Market']];
+  var FALLBACK=['❤️','⭐','✨','💛','🌈','🎈','🍀','🌟','💖','🎁'];
+
+  var MAP=[
+    ['banana','🍌'],['apple','🍎'],['orange','🍊'],['lemon','🍋'],['lime','🍋'],['grape','🍇'],['strawberr','🍓'],
+    ['blueberr','🫐'],['berry','🫐'],['cherr','🍒'],['peach','🍑'],['pear','🍐'],['pineapple','🍍'],['mango','🥭'],
+    ['watermelon','🍉'],['melon','🍈'],['coconut','🥥'],['kiwi','🥝'],['avocado','🥑'],['tomato','🍅'],
+    ['potato','🥔'],['carrot','🥕'],['corn','🌽'],['pepper','🌶️'],['cucumber','🥒'],['broccoli','🥦'],
+    ['lettuce','🥬'],['spinach','🥬'],['salad','🥗'],['kale','🥬'],['garlic','🧄'],['onion','🧅'],['mushroom','🍄'],
+    ['bread','🍞'],['bagel','🥯'],['croissant','🥐'],['bun','🥖'],['baguette','🥖'],['pretzel','🥨'],['pancake','🥞'],
+    ['waffle','🧇'],['cheese','🧀'],['egg','🥚'],['milk','🥛'],['butter','🧈'],['yogurt','🥛'],['cream','🥛'],
+    ['bacon','🥓'],['steak','🥩'],['beef','🥩'],['pork','🥩'],['chicken','🍗'],['turkey','🦃'],['ham','🍖'],
+    ['sausage','🌭'],['hot dog','🌭'],['burger','🍔'],['pizza','🍕'],['taco','🌮'],['burrito','🌯'],
+    ['fish','🐟'],['salmon','🐟'],['tuna','🐟'],['shrimp','🍤'],['crab','🦀'],['lobster','🦞'],
+    ['rice','🍚'],['pasta','🍝'],['spaghetti','🍝'],['noodle','🍜'],['ramen','🍜'],['soup','🍲'],['sushi','🍣'],
+    ['cereal','🥣'],['oat','🥣'],['peanut','🥜'],['nut','🥜'],['honey','🍯'],['jam','🍯'],['salt','🧂'],
+    ['sugar','🍬'],['candy','🍬'],['chocolate','🍫'],['cookie','🍪'],['cake','🍰'],['cupcake','🧁'],['donut','🍩'],
+    ['ice cream','🍦'],['popcorn','🍿'],['chip','🥔'],['cracker','🍘'],
+    ['coffee','☕'],['tea','🍵'],['juice','🧃'],['water','💧'],['soda','🥤'],['cola','🥤'],['beer','🍺'],
+    ['wine','🍷'],['champagne','🍾'],['whiskey','🥃'],['cocktail','🍸'],
+    ['soap','🧼'],['shampoo','🧴'],['lotion','🧴'],['toothpaste','🪥'],['toothbrush','🪥'],['toilet paper','🧻'],
+    ['paper towel','🧻'],['tissue','🧻'],['sponge','🧽'],['detergent','🧺'],['laundry','🧺'],['trash bag','🗑️'],
+    ['diaper','👶'],['baby','👶'],['dog','🐶'],['cat','🐱'],['pet','🐾'],
+    ['battery','🔋'],['bulb','💡'],['light','💡'],['tape','📏'],['screw','🔩'],['nail','🔩'],['hammer','🔨'],
+    ['paint','🎨'],['filter','🚰'],['vitamin','💊'],['medicine','💊'],['pill','💊'],['bandage','🩹'],
+    ['flower','💐'],['plant','🪴'],['soil','🪴'],['candle','🕯️'],['gift','🎁'],['card','💌'],['pen','🖊️'],['paper','📄'],
+    ['gas','⛽'],['wrap','🎁'],['foil','🥫'],['can','🥫'],['bean','🫘'],['sauce','🥫']
+  ];
+
+  function pickEmoji(text){
+    var t=(text||'').toLowerCase().trim();
+    if(!t) return '⭐';
+    for(var i=0;i<MAP.length;i++){ if(t.indexOf(MAP[i][0])>-1) return MAP[i][1]; }
+    var h=0; for(var j=0;j<t.length;j++){ h=(h*31+t.charCodeAt(j))>>>0; }
+    return FALLBACK[h%FALLBACK.length];
+  }
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function fmtDate(s){ if(!s) return ''; var p=s.split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]);
+    return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}); }
+
+  var state={items:[],stores:DEFAULT_STORES.map(function(s){return{e:s[0],n:s[1]}}),store:'Grocery'};
+  try{ var saved=JSON.parse(localStorage.getItem(KEY)); if(saved&&saved.items) state=saved; }catch(e){}
+  // migrate older saved lists: swap unused Costco for Aldi + Schnucks
+  (function(){
+    var has=function(n){return state.stores.some(function(s){return s.n===n})};
+    if(has('Costco') && !state.items.some(function(i){return i.store==='Costco'})){
+      state.stores=state.stores.filter(function(s){return s.n!=='Costco'});
+      if(state.store==='Costco') state.store='Grocery';
+    }
+    if(!has('Aldi')) state.stores.splice(1,0,{e:'🥖',n:'Aldi'});
+    if(!has('Schnucks')) state.stores.splice(2,0,{e:'🍎',n:'Schnucks'});
+  })();
+
+  // ---- themes
+  function T(e,deco,confetti,bg,g1,g2,green,greenD,pink,pinkD,yellow,line,tint,tint2){
+    return {e:e,deco:deco,c:confetti.split(' '),v:{bg:bg,g1:g1,g2:g2,green:green,'green-d':greenD,pink:pink,'pink-d':pinkD,yellow:yellow,line:line,tint:tint,tint2:tint2}};
+  }
+  var THEMES={
+    classic:   {n:'Classic',     t:T('🛍️','🍌🥕🍎','🎉 ⭐ ✨ 💖 🍌 🛍️','#fff8ee','#2f9e6b','#52c28c','#2f9e6b','#1f7a50','#ff5d8f','#d93f72','#ffd166','#eadfcb','#e6f6ee','#fff4d6')},
+    autumn:    {n:'Autumn',      t:T('🍂','🍁🍂🌰','🍁 🍂 🌰 🍎 🍂','#fdf3e3','#c2571a','#e8933a','#c2571a','#8f3d0f','#a8431f','#7d2f12','#f4c15d','#ecd5b3','#fbe4cc','#fff0cf')},
+    thanksgiving:{n:'Thanksgiving',t:T('🦃','🦃🌽🥧','🦃 🥧 🌽 🍁 🍠','#fbf1e1','#8a4b24','#c07a3a','#8a4b24','#5e3016','#d9822b','#a85f16','#f2c14e','#ecd9bd','#f3e3cc','#fff0cf')},
+    christmas: {n:'Christmas',   t:T('🎄','🎅🎄🎁','🎄 🎁 ⭐ ❄️ 🔔','#fff7f2','#b3202a','#1e7a46','#1e7a46','#125a32','#c8202c','#8f1219','#ffd166','#eed8d0','#e2f3e8','#ffe9e6')},
+    halloween: {n:'Halloween',   t:T('🎃','🦇🎃👻','🎃 👻 🦇 🍬 🕸️','#fbf4ff','#4b2a7b','#ff7a18','#6a3fb0','#4b2a7b','#ff7a18','#c75a08','#ffb347','#e3d3f2','#efe4fb','#ffeacc')},
+    winter:    {n:'Winter',      t:T('⛄','❄️⛄🧣','❄️ ⛄ 🧣 ☃️ ✨','#f1f7fd','#2b6cb0','#63b3ed','#2b6cb0','#1e4e82','#3b9ae1','#2174b8','#bfe3ff','#d3e3f2','#e1effb','#e8f4ff')},
+    valentine: {n:"Valentine's", t:T('💝','💘🌹💌','💖 💘 🌹 💌 ✨','#fff0f5','#d6336c','#ff7aa8','#d6336c','#a61e4d','#7b2cbf','#5a189a','#ffd6e0','#f5d0dc','#ffe0ea','#fff0d9')},
+    spring:    {n:'Spring',      t:T('🌷','🐣🌷🥚','🌷 🐣 🥚 🌼 🦋','#fbfff0','#7bb83d','#b4e06c','#6aa82e','#4a7d1c','#ff7eb6','#d9568c','#ffe066','#e0ecc8','#eaf6d6','#fff7cc')},
+    july4:     {n:'4th of July', t:T('🎆','🇺🇸🎆☀️','🎆 🇺🇸 ⭐ 🌭 🍉','#f8fbff','#1d4ed8','#e11d48','#1d4ed8','#1e3a8a','#e11d48','#9f1239','#fde047','#d5def0','#dde7ff','#fff1c2')}
+  };
+  function applyTheme(k){
+    if(!THEMES[k]) k='classic';
+    state.theme=k;
+    var t=THEMES[k].t, r=document.documentElement.style;
+    Object.keys(t.v).forEach(function(p){ r.setProperty('--'+p,t.v[p]); });
+    document.getElementById('tEmoji').textContent=t.e;
+    document.getElementById('deco').textContent=t.deco;
+    document.getElementById('metaTheme').setAttribute('content',t.v.g1);
+    save();
+  }
+  function curTheme(){ return (THEMES[state.theme]||THEMES.classic).t; }
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){} }
+
+  var $=function(id){return document.getElementById(id)};
+  var nameI=$('name'), qtyI=$('qty'), dateI=$('date'), prev=$('prev');
+  dateI.value=todayStr();
+  var manualEmoji=null;
+
+  function storeEmoji(n){ for(var i=0;i<state.stores.length;i++) if(state.stores[i].n===n) return state.stores[i].e; return '🛒'; }
+
+  function renderChips(){
+    var h=state.stores.map(function(s){
+      return '<button class="chip'+(s.n===state.store?' on':'')+'" data-s="'+esc(s.n)+'">'+esc(s.e)+' '+esc(s.n)+'</button>';
+    }).join('');
+    h+='<button class="chip ghost" id="addStore">＋ Store</button>';
+    $('storeChips').innerHTML=h;
+  }
+  $('storeChips').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    if(b.id==='addStore'){
+      var n=prompt('Store name?'); if(!n||!n.trim()) return;
+      n=n.trim();
+      if(!state.stores.some(function(s){return s.n===n})) state.stores.push({e:'🏪',n:n});
+      state.store=n;
+    } else state.store=b.getAttribute('data-s');
+    save(); renderChips();
+  });
+
+  nameI.addEventListener('input',function(){ if(!manualEmoji) prev.textContent=pickEmoji(nameI.value); });
+
+  function addItem(){
+    var n=nameI.value.trim(); if(!n){ nameI.focus(); return; }
+    state.items.push({id:Date.now()+Math.random(),date:dateI.value||todayStr(),store:state.store,
+      name:n,qty:qtyI.value.trim(),emoji:manualEmoji||pickEmoji(n),picked:false});
+    nameI.value='';qtyI.value='';manualEmoji=null;prev.textContent='⭐';
+    save(); render(); nameI.focus();
+  }
+  $('addBtn').onclick=addItem;
+  [nameI,qtyI].forEach(function(i){i.addEventListener('keydown',function(e){ if(e.key==='Enter'){ if(i===nameI) qtyI.focus(); else addItem(); }})});
+
+  // ---- list rendering
+  function render(){
+    var left=state.items.filter(function(i){return !i.picked}).length, total=state.items.length;
+    $('cnt').textContent=left+' left to buy';
+    $('pct').textContent=total?Math.round((total-left)/total*100)+'% done':'';
+    $('bar').style.width=total?((total-left)/total*100)+'%':'0';
+    if(!total){ $('list').innerHTML='<div class="empty"><div>🧺</div>Your list is empty!<br>Pick a store and add something yummy above.</div>'; return; }
+
+    var groups={}, order=[];
+    state.items.forEach(function(it){ if(!groups[it.store]){groups[it.store]=[];order.push(it.store);} groups[it.store].push(it); });
+    order.sort(function(a,b){ // stores with things left first
+      var la=groups[a].some(function(i){return !i.picked}), lb=groups[b].some(function(i){return !i.picked});
+      return (lb-la)||a.localeCompare(b);
+    });
+    var h='';
+    order.forEach(function(s){
+      var arr=groups[s].slice().sort(function(a,b){ return (a.picked-b.picked)||a.date.localeCompare(b.date); });
+      var l=arr.filter(function(i){return !i.picked}).length;
+      h+='<div class="store">'+esc(storeEmoji(s))+' '+esc(s)+' <small>'+l+' left</small></div>';
+      arr.forEach(function(it){
+        h+='<div class="swipe'+(it.picked?' done':'')+'" data-id="'+it.id+'">'+
+          '<div class="bg" style="background:linear-gradient(90deg,var(--green) 50%,#e5484d 50%)"><span class="l">✅ Picked</span><span class="r">🗑️ Remove</span></div>'+
+          '<div class="item">'+
+            '<div class="emo" data-act="emoji">'+esc(it.emoji)+'</div>'+
+            '<div class="txt"><div class="name">'+esc(it.name)+'</div>'+
+              '<div class="meta">'+(it.qty?'<span class="qty">'+esc(it.qty)+'</span>':'')+'📅 '+esc(fmtDate(it.date))+'</div></div>'+
+            '<button class="ck" data-act="toggle" aria-label="Mark picked">'+(it.picked?'✓':'')+'</button>'+
+            '<button class="x" data-act="del" aria-label="Remove">✕</button>'+
+          '</div></div>';
+      });
+    });
+    $('list').innerHTML=h;
+  }
+
+  function find(id){ for(var i=0;i<state.items.length;i++) if(String(state.items[i].id)===String(id)) return state.items[i]; }
+
+  var undoStack=null, toastT;
+  function toast(msg,undo){
+    $('toastMsg').textContent=msg; undoStack=undo||null;
+    $('undoBtn').style.display=undo?'':'none';
+    $('toast').classList.add('show'); clearTimeout(toastT);
+    toastT=setTimeout(function(){$('toast').classList.remove('show')},4000);
+  }
+  $('undoBtn').onclick=function(){ if(undoStack){undoStack();undoStack=null;} $('toast').classList.remove('show'); };
+
+  function toggle(it){
+    it.picked=!it.picked; save(); render();
+    if(it.picked && state.items.every(function(i){return i.picked})) party();
+  }
+  function remove(it){
+    var idx=state.items.indexOf(it); state.items.splice(idx,1); save(); render();
+    toast('Removed '+it.name,function(){ state.items.splice(idx,0,it); save(); render(); });
+  }
+  function party(){
+    var set=curTheme().c.concat(['🎉','✨']);
+    for(var i=0;i<28;i++){ (function(i){ setTimeout(function(){
+      var c=document.createElement('div'); c.className='confetti'; c.textContent=set[i%set.length];
+      c.style.left=Math.random()*95+'vw'; c.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+      document.body.appendChild(c); setTimeout(function(){c.remove()},3200);
+    },i*60); })(i); }
+    toast('🎉 All done — nice shopping!');
+  }
+
+  // ---- taps
+  var pickTarget=null;
+  $('list').addEventListener('click',function(e){
+    var a=e.target.closest('[data-act]'); if(!a) return;
+    var row=a.closest('.swipe'); var it=find(row.getAttribute('data-id')); if(!it) return;
+    var act=a.getAttribute('data-act');
+    if(act==='toggle') toggle(it);
+    else if(act==='del') remove(it);
+    else if(act==='emoji'){ pickTarget=it; openPicker(); }
+  });
+
+  // ---- swipe
+  var sw=null;
+  $('list').addEventListener('pointerdown',function(e){
+    if(e.target.closest('button')) return;
+    var item=e.target.closest('.item'); if(!item) return;
+    sw={el:item,x:e.clientX,y:e.clientY,dx:0,on:false,id:e.pointerId};
+  });
+  window.addEventListener('pointermove',function(e){
+    if(!sw) return;
+    var dx=e.clientX-sw.x, dy=e.clientY-sw.y;
+    if(!sw.on){
+      if(Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)){ sw.on=true; sw.el.classList.add('drag'); try{sw.el.setPointerCapture(sw.id)}catch(_){} }
+      else if(Math.abs(dy)>10){ sw=null; return; }
+    }
+    if(sw&&sw.on){ sw.dx=dx; sw.el.style.transform='translateX('+dx+'px)'; }
+  });
+  function endSwipe(){
+    if(!sw) return;
+    var s=sw; sw=null;
+    if(!s.on) return;
+    s.el.classList.remove('drag');
+    var id=s.el.parentNode.getAttribute('data-id'), it=find(id);
+    if(it && s.dx>80){ s.el.style.transform='translateX(100%)'; setTimeout(function(){toggle(it)},150); }
+    else if(it && s.dx<-80){ s.el.style.transform='translateX(-100%)'; setTimeout(function(){remove(it)},150); }
+    else s.el.style.transform='';
+  }
+  window.addEventListener('pointerup',endSwipe);
+  window.addEventListener('pointercancel',endSwipe);
+
+  // ---- emoji picker
+  var PICK='🍌 🍎 🍊 🍋 🍇 🍓 🍉 🥑 🍅 🥕 🌽 🥦 🥬 🧄 🧅 🥔 🍞 🥐 🧀 🥚 🥛 🧈 🥩 🍗 🐟 🍤 🍝 🍚 🍕 🍔 🌮 🥫 🍪 🍫 🍦 🍿 ☕ 🧃 💧 🥤 🍷 🍺 🧻 🧼 🧴 🪥 🧽 🧺 🗑️ 💊 🩹 🔋 💡 🔨 🔩 🎨 🪴 💐 🐶 🐱 👶 🎁 ❤️ ⭐ ✨ 🌈'.split(' ');
+  $('grid').innerHTML=PICK.map(function(e){return '<span>'+e+'</span>'}).join('');
+  function openPicker(){ $('custom').value=''; $('picker').classList.add('show'); }
+  function closePicker(){ $('picker').classList.remove('show'); pickTarget=null; }
+  function choose(e){
+    if(!e) return;
+    if(pickTarget){ pickTarget.emoji=e; save(); render(); }
+    else { manualEmoji=e; prev.textContent=e; }
+    closePicker();
+  }
+  $('grid').addEventListener('click',function(e){ if(e.target.tagName==='SPAN') choose(e.target.textContent); });
+  $('custom').addEventListener('input',function(){ var v=this.value.trim(); if(v) choose(Array.from(v)[0]); });
+  $('picker').addEventListener('click',function(e){ if(e.target===$('picker')) closePicker(); });
+  prev.onclick=function(){ pickTarget=null; openPicker(); };
+
+  // ---- footer buttons
+  $('clearBtn').onclick=function(){
+    var gone=state.items.filter(function(i){return i.picked});
+    if(!gone.length){ toast('Nothing picked yet'); return; }
+    var before=state.items.slice();
+    state.items=state.items.filter(function(i){return !i.picked});
+    save(); render();
+    toast('Cleared '+gone.length+' picked',function(){ state.items=before; save(); render(); });
+  };
+  $('shareBtn').onclick=function(){
+    var left=state.items.filter(function(i){return !i.picked});
+    if(!left.length){ toast('Nothing left to share 🎉'); return; }
+    var by={}; left.forEach(function(i){(by[i.store]=by[i.store]||[]).push(i)});
+    var txt='🛍️ Shopping list\n';
+    Object.keys(by).forEach(function(s){
+      txt+='\n'+storeEmoji(s)+' '+s+'\n';
+      by[s].forEach(function(i){ txt+='  '+i.emoji+' '+i.name+(i.qty?' — '+i.qty:'')+'\n'; });
+    });
+    if(navigator.share){ navigator.share({text:txt}).catch(function(){}); }
+    else if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){toast('List copied 📋')}); }
+    else prompt('Copy your list:',txt);
+  };
+
+  function renderThemes(){
+    $('themeGrid').innerHTML=Object.keys(THEMES).map(function(k){
+      return '<button class="tb'+(k===state.theme?' on':'')+'" data-k="'+k+'"><span>'+THEMES[k].t.e+'</span>'+esc(THEMES[k].n)+'</button>';
+    }).join('');
+  }
+  $('themeBtn').onclick=function(){ renderThemes(); $('themes').classList.add('show'); };
+  $('themes').addEventListener('click',function(e){
+    var b=e.target.closest('.tb');
+    if(b){ applyTheme(b.getAttribute('data-k')); $('themes').classList.remove('show'); }
+    else if(e.target===$('themes')) $('themes').classList.remove('show');
+  });
+
+  // ---- backup & restore
+  function makeBackup(){
+    return JSON.stringify({app:'shoppingList',v:1,saved:new Date().toISOString(),
+      items:state.items,stores:state.stores,store:state.store,theme:state.theme});
+  }
+  $('bkOpen').onclick=function(){ $('bkText').value=''; $('backup').classList.add('show'); };
+  $('backup').addEventListener('click',function(e){ if(e.target===$('backup')) $('backup').classList.remove('show'); });
+  $('bkCopy').onclick=function(){
+    var txt=makeBackup();
+    function fallback(){ $('bkText').value=txt; $('bkText').focus(); $('bkText').select(); toast('Select all & copy the text 👆'); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast('Backup copied 📋 — paste it somewhere safe'); },fallback);
+    } else fallback();
+  };
+  $('bkShare').onclick=function(){
+    var txt=makeBackup();
+    if(navigator.share){ navigator.share({title:'Shopping list backup',text:txt}).catch(function(){}); return; }
+    try{
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([txt],{type:'application/json'}));
+      a.download='shopping-list-backup-'+todayStr()+'.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      toast('Backup file saved 💾');
+    }catch(e){ $('bkText').value=txt; toast('Copy the text from the box 👆'); }
+  };
+  $('restoreBtn').onclick=function(){
+    var raw=$('bkText').value.trim(), data;
+    if(!raw){ toast('Paste a backup first'); return; }
+    var i=raw.indexOf('{'), j=raw.lastIndexOf('}');
+    try{ data=JSON.parse(raw.slice(i,j+1)); }catch(e){ data=null; }
+    if(!data||data.app!=='shoppingList'||!Array.isArray(data.items)){ toast("That doesn't look like a backup 🤔"); return; }
+    var before=JSON.stringify(state);
+    state.items=data.items;
+    if(Array.isArray(data.stores)&&data.stores.length) state.stores=data.stores;
+    state.store=data.store||state.store;
+    if(data.theme&&THEMES[data.theme]) state.theme=data.theme;
+    save(); applyTheme(state.theme); renderChips(); render();
+    $('backup').classList.remove('show');
+    toast('Restored '+state.items.length+' items ✅',function(){ state=JSON.parse(before); save(); applyTheme(state.theme||'classic'); renderChips(); render(); });
+  };
+  // ask the browser to keep this list (not auto-clean it)
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+
+  applyTheme(state.theme||'classic');
+  renderChips(); render();
+})();
+</script>
+</body>
+</html>
